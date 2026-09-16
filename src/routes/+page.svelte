@@ -130,6 +130,10 @@
 					<h2 class="text-sm font-medium text-zinc-400">
 						{activeTask ? '과제' : (activeChat?.title ?? '새 대화')}
 					</h2>
+					{#if activeTask}<button
+							class="rounded-lg border border-zinc-800 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-100"
+							onclick={returnToChat}>원래 대화로 돌아가기</button
+						>{/if}
 				</div>
 			</header>
 			<div class="flex-1 space-y-5 overflow-y-auto p-5">
