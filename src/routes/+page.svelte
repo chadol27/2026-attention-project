@@ -153,8 +153,10 @@
 
 <svelte:head><title>과의존 방지 AI</title></svelte:head>
 
-<main class="flex h-screen min-h-screen flex-col overflow-hidden bg-zinc-950 text-zinc-100">
-	<div class="mx-auto flex min-h-0 max-w-6xl flex-1 flex-col md:flex-row">
+<main
+	class="grid h-screen min-h-screen grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-zinc-950 text-zinc-100"
+>
+	<div class="mx-auto flex min-h-0 max-w-6xl min-w-0 flex-col md:flex-row">
 		<aside
 			class="{mobileView === 'chat'
 				? 'hidden'
