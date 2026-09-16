@@ -156,7 +156,7 @@
 <main
 	class="grid h-screen min-h-screen grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-zinc-950 text-zinc-100"
 >
-	<div class="mx-auto flex min-h-0 max-w-6xl min-w-0 flex-col md:flex-row">
+	<div class="mx-auto flex min-h-0 w-full max-w-6xl min-w-0 flex-col md:flex-row">
 		<aside
 			class="{mobileView === 'chat'
 				? 'hidden'
@@ -201,7 +201,7 @@
 		<section
 			class="{mobileView === 'list'
 				? 'hidden'
-				: 'flex'} min-h-0 flex-1 flex-col overflow-hidden md:flex"
+				: 'flex'} min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex"
 		>
 			<header
 				class="sticky top-0 z-10 shrink-0 border-b border-zinc-800 bg-zinc-950/95 px-5 py-4 backdrop-blur"
