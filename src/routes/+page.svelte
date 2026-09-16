@@ -33,10 +33,7 @@
 		const response = await fetch(`/api/chats/${id}`);
 		if (response.ok) {
 			activeChat = await response.json();
-			activeTask =
-				activeChat?.messages
-					.flatMap((message) => message.tasks ?? [])
-					.find((task) => task.status === 'pending') ?? null;
+			activeTask = null;
 		}
 	}
 
