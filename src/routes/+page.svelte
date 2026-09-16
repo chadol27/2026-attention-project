@@ -153,12 +153,12 @@
 
 <svelte:head><title>과의존 방지 AI</title></svelte:head>
 
-<main class="h-screen min-h-screen overflow-hidden bg-zinc-950 text-zinc-100">
-	<div class="mx-auto flex h-full max-w-6xl flex-col md:flex-row">
+<main class="flex h-screen min-h-screen flex-col overflow-hidden bg-zinc-950 text-zinc-100">
+	<div class="mx-auto flex min-h-0 max-w-6xl flex-1 flex-col md:flex-row">
 		<aside
 			class="{mobileView === 'chat'
 				? 'hidden'
-				: 'flex'} max-h-screen w-full flex-col overflow-y-auto border-b border-zinc-800 p-4 md:flex md:max-h-none md:w-72 md:border-r md:border-b-0"
+				: 'flex'} max-h-full w-full flex-col overflow-y-auto border-b border-zinc-800 p-4 md:flex md:w-72 md:border-r md:border-b-0"
 		>
 			<div class="mb-6 flex items-start justify-between gap-3">
 				<div>
@@ -199,7 +199,7 @@
 		<section
 			class="{mobileView === 'list'
 				? 'hidden'
-				: 'flex'} h-screen min-h-screen flex-1 flex-col overflow-hidden md:flex"
+				: 'flex'} min-h-0 flex-1 flex-col overflow-hidden md:flex"
 		>
 			<header
 				class="sticky top-0 z-10 shrink-0 border-b border-zinc-800 bg-zinc-950/95 px-5 py-4 backdrop-blur"
@@ -421,6 +421,15 @@
 				</form>{/if}
 		</section>
 	</div>
+	<footer class="shrink-0 border-t border-zinc-800 px-5 py-3 text-center text-xs text-zinc-400">
+		2026 와부고등학교 ATTENTION 프로젝트 활동 &copy; 황순건 (chadol.xyz).
+		<a
+			class="ml-1 text-indigo-300 underline decoration-indigo-300/60 underline-offset-2 hover:text-indigo-200 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
+			href="https://github.com/chadol27/2026-attention-project"
+			target="_blank"
+			rel="noreferrer">소스코드 보기</a
+		>
+	</footer>
 </main>
 
 <style>
