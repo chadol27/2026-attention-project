@@ -2,6 +2,7 @@
 	"name": "2026-attention-project",
 	"private": true,
 	"version": "0.0.1",
+	"description": "과의존 방지 AI",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",

@@ -101,7 +101,7 @@
 	}
 </script>
 
-<svelte:head><title>의존하지 않는 AI</title></svelte:head>
+<svelte:head><title>과의존 방지 AI</title></svelte:head>
 
 <main class="min-h-screen bg-zinc-950 text-zinc-100">
 	<div class="mx-auto flex min-h-screen max-w-6xl flex-col md:flex-row">
