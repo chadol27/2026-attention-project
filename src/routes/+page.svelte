@@ -130,10 +130,6 @@
 					<h2 class="text-sm font-medium text-zinc-400">
 						{activeTask ? '과제' : (activeChat?.title ?? '새 대화')}
 					</h2>
-					{#if activeTask}<button
-							class="text-xs text-zinc-400 hover:text-zinc-100"
-							onclick={returnToChat}>원래 대화로 돌아가기</button
-						>{/if}
 				</div>
 			</header>
 			<div class="flex-1 space-y-5 overflow-y-auto p-5">
@@ -226,6 +222,14 @@
 						submitTask();
 					}}
 				>
+					{#if !taskInput.trim()}
+						<div class="mx-auto mb-3 max-w-2xl">
+							<button
+								class="text-sm text-zinc-400 underline decoration-zinc-700 underline-offset-4 hover:text-zinc-100"
+								onclick={returnToChat}>과제 넘어가기</button
+							>
+						</div>
+					{/if}
 					<div
 						class="mx-auto flex max-w-2xl gap-2 rounded-xl border border-zinc-700 bg-zinc-900 p-2 focus-within:border-zinc-400"
 					>
@@ -249,21 +253,6 @@
 						sendMessage();
 					}}
 				>
-					{#if activeChat?.messages.some( (message) => message.tasks?.some((task) => task.status === 'pending') ) && !input.trim()}
-						<div class="mb-3">
-							<button
-								class="text-sm text-zinc-400 underline decoration-zinc-700 underline-offset-4 hover:text-zinc-100"
-								onclick={() => {
-									const task = activeChat?.messages
-										.flatMap((message) => message.tasks ?? [])
-										.find((item) => item.status === 'pending');
-									if (task) openTask(task);
-								}}
-							>
-								과제 넘어가기
-							</button>
-						</div>
-					{/if}
 					<div
 						class="flex gap-2 rounded-xl border border-zinc-700 bg-zinc-900 p-2 focus-within:border-zinc-400"
 					>
