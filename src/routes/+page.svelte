@@ -188,7 +188,8 @@
 					{#each activeChat.messages as message}
 						<div class="max-w-2xl {message.role === 'user' ? 'ml-auto' : ''}">
 							<div
-								class="rounded-2xl px-4 py-3 text-sm leading-6 {message.role === 'user'
+								class="rounded-2xl px-4 py-3 text-sm leading-6 break-words whitespace-pre-wrap {message.role ===
+								'user'
 									? 'bg-indigo-600 text-white'
 									: 'bg-zinc-900 text-zinc-200'}"
 							>
