@@ -162,7 +162,7 @@
 				? 'hidden'
 				: 'flex'} max-h-full w-full flex-col overflow-y-auto border-b border-zinc-800 p-4 md:flex md:w-72 md:border-r md:border-b-0"
 		>
-			<div class="mb-6 flex items-start justify-between gap-3">
+			<div class="mb-6 flex h-10 items-center justify-between gap-3">
 				<div>
 					<p class="text-lg font-semibold tracking-tight text-indigo-300">과의존 방지 AI</p>
 				</div>
