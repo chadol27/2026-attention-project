@@ -238,7 +238,13 @@
 							rows="3"
 							placeholder="내 생각과 근거를 작성하세요"
 							class="min-h-20 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-zinc-600"
-							disabled={taskLoading}></textarea>
+							disabled={taskLoading}
+							onkeydown={(event) => {
+								if (event.key === 'Enter' && !event.shiftKey) {
+									event.preventDefault();
+									submitTask();
+								}
+							}}></textarea>
 						<button
 							class="self-end rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500 disabled:opacity-50"
 							disabled={taskLoading || !taskInput.trim()}
