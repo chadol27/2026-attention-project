@@ -158,16 +158,19 @@
 		<aside
 			class="{mobileView === 'chat'
 				? 'hidden'
-				: 'flex'} w-full flex-col border-b border-zinc-800 p-4 md:flex md:w-72 md:border-r md:border-b-0"
+				: 'flex'} max-h-screen w-full flex-col overflow-y-auto border-b border-zinc-800 p-4 md:flex md:max-h-none md:w-72 md:border-r md:border-b-0"
 		>
 			<div class="mb-6 flex items-start justify-between gap-3">
 				<div>
 					<p class="text-lg font-semibold tracking-tight text-indigo-300">과의존 방지 AI</p>
 				</div>
-				<button
-					class="rounded-lg bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-white focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
-					onclick={newChat}>새 채팅</button
-				>
+				{#if activeChat}
+					<button
+						type="button"
+						class="rounded-lg bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-white focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
+						onclick={newChat}>새 채팅</button
+					>
+				{/if}
 			</div>
 			{#if chatsLoading}
 				<p class="px-3 py-2 text-sm text-zinc-400" aria-live="polite">대화 목록을 불러오는 중...</p>
@@ -177,8 +180,10 @@
 				<nav class="space-y-1" aria-label="저장된 대화">
 					{#each chats as chat}
 						<button
+							type="button"
 							class:active={activeChat?.id === chat.id}
 							class="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-300 transition hover:bg-zinc-900 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
+							aria-current={activeChat?.id === chat.id ? 'page' : undefined}
 							onclick={() => openChat(chat.id)}
 						>
 							<span class="block truncate">{chat.title}</span>
@@ -201,10 +206,12 @@
 			>
 				<div class="flex flex-wrap items-center gap-3">
 					<button
+						type="button"
 						class="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none md:hidden"
 						onclick={showChatList}>대화 목록</button
 					>
 					{#if activeTask}<button
+							type="button"
 							class="shrink-0 rounded-lg border border-indigo-400 bg-indigo-600 px-3 py-2 text-xs font-medium text-white shadow-sm transition hover:border-indigo-300 hover:bg-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:outline-none"
 							onclick={returnToChat}>원래 대화로 돌아가기</button
 						>{/if}
@@ -213,7 +220,7 @@
 							class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-sm whitespace-nowrap"
 						>
 							<span class="truncate text-zinc-400">{activeChat?.title ?? '원래 대화'}</span>
-							<span class="shrink-0 text-zinc-600" aria-hidden="true">&gt;</span>
+							<span class="shrink-0 text-zinc-400" aria-hidden="true">&gt;</span>
 							<span class="truncate font-medium text-zinc-100">{activeTask.title}</span>
 						</div>
 					{:else}
@@ -305,9 +312,11 @@
 									<div class="mt-2 flex flex-wrap gap-2">
 										{#each message.tasks as task}
 											<button
+												type="button"
 												class="rounded-lg border px-3 py-2 text-xs {task.status === 'passed'
 													? 'border-emerald-800 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-950/50'
-													: 'border-amber-800 bg-amber-950/20 text-amber-300 hover:bg-amber-950/50'}"
+													: 'border-amber-800 bg-amber-950/20 text-amber-300 hover:bg-amber-950/50'} focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
+												aria-label={`${task.status === 'passed' ? '통과한 과제' : '과제 열기'}: ${task.title}`}
 												onclick={() => openTask(task)}
 											>
 												{task.status === 'passed' ? '통과한 과제' : '과제 열기'}: {task.title}
@@ -354,6 +363,7 @@
 					{#if !taskInput.trim()}
 						<div class="mx-auto mb-3 max-w-2xl">
 							<button
+								type="button"
 								class="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 transition hover:border-zinc-500 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
 								onclick={returnToChat}>과제 넘어가기</button
 							>
@@ -364,6 +374,7 @@
 					>
 						<textarea
 							bind:value={taskInput}
+							aria-label="과제 답변 입력"
 							rows="3"
 							placeholder="내 생각과 근거를 작성하세요"
 							class="min-h-20 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-zinc-400"
@@ -393,6 +404,7 @@
 					>
 						<textarea
 							bind:value={input}
+							aria-label="질문 입력"
 							rows="1"
 							placeholder="질문을 입력하세요"
 							class="min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-zinc-400"
