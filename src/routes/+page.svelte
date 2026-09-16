@@ -10,6 +10,11 @@
 	let activeTask = $state<Task | null>(null);
 	let taskInput = $state('');
 	let taskLoading = $state(false);
+	let taskContext = $derived(
+		activeChat?.messages.find((message) =>
+			message.tasks?.some((task) => task.id === activeTask?.id)
+		)
+	);
 
 	onMount(loadChats);
 
@@ -26,7 +31,13 @@
 
 	async function openChat(id: string) {
 		const response = await fetch(`/api/chats/${id}`);
-		if (response.ok) activeChat = await response.json();
+		if (response.ok) {
+			activeChat = await response.json();
+			activeTask =
+				activeChat?.messages
+					.flatMap((message) => message.tasks ?? [])
+					.find((task) => task.status === 'pending') ?? null;
+		}
 	}
 
 	function openTask(task: Task) {
@@ -77,7 +88,9 @@
 			body: JSON.stringify({ content })
 		});
 		if (response.ok) {
-			activeChat = await response.json();
+			const chat: Chat = await response.json();
+			activeChat = chat;
+			activeTask = chat.messages.at(-1)?.tasks?.[0] ?? null;
 			await loadChats();
 		} else {
 			const body = await response.json().catch(() => null);
@@ -127,14 +140,28 @@
 				{#if activeTask}
 					<div class="mx-auto max-w-2xl space-y-6">
 						<div>
-							<p class="mb-2 text-xs font-medium tracking-widest text-indigo-400 uppercase">
-								직접 생각해 보기
-							</p>
 							<h3 class="text-xl font-semibold text-zinc-100">{activeTask.title}</h3>
 							<p class="mt-4 text-sm leading-7 whitespace-pre-wrap text-zinc-300">
 								{activeTask.prompt}
 							</p>
 						</div>
+						{#if taskContext}
+							<div class="space-y-4 border-l-2 border-zinc-800 pl-4">
+								<div>
+									<p class="mb-1 text-xs text-zinc-500">질문</p>
+									<p class="text-sm leading-6 whitespace-pre-wrap text-zinc-400">
+										{activeChat?.messages[activeChat.messages.indexOf(taskContext) - 1]?.content ??
+											''}
+									</p>
+								</div>
+								<div>
+									<p class="mb-1 text-xs text-zinc-500">AI 답변</p>
+									<p class="text-sm leading-6 whitespace-pre-wrap text-zinc-300">
+										{taskContext.content}
+									</p>
+								</div>
+							</div>
+						{/if}
 						<div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
 							<p class="mb-2 text-xs text-zinc-500">통과 기준</p>
 							<ul class="list-inside list-disc space-y-1 text-sm text-zinc-400">
@@ -222,6 +249,21 @@
 						sendMessage();
 					}}
 				>
+					{#if activeChat?.messages.some( (message) => message.tasks?.some((task) => task.status === 'pending') ) && !input.trim()}
+						<div class="mb-3">
+							<button
+								class="text-sm text-zinc-400 underline decoration-zinc-700 underline-offset-4 hover:text-zinc-100"
+								onclick={() => {
+									const task = activeChat?.messages
+										.flatMap((message) => message.tasks ?? [])
+										.find((item) => item.status === 'pending');
+									if (task) openTask(task);
+								}}
+							>
+								과제 넘어가기
+							</button>
+						</div>
+					{/if}
 					<div
 						class="flex gap-2 rounded-xl border border-zinc-700 bg-zinc-900 p-2 focus-within:border-zinc-400"
 					>
