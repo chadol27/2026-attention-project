@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { Chat, ChatListItem } from '$lib/types';
+	import type { Chat, ChatListItem, Task } from '$lib/types';
 
 	let chats = $state<ChatListItem[]>([]);
 	let activeChat = $state<Chat | null>(null);
 	let input = $state('');
 	let loading = $state(false);
 	let errorMessage = $state('');
+	let activeTask = $state<Task | null>(null);
+	let taskInput = $state('');
+	let taskLoading = $state(false);
 
 	onMount(loadChats);
 
@@ -17,12 +20,48 @@
 
 	function newChat() {
 		activeChat = null;
+		activeTask = null;
 		errorMessage = '';
 	}
 
 	async function openChat(id: string) {
 		const response = await fetch(`/api/chats/${id}`);
 		if (response.ok) activeChat = await response.json();
+	}
+
+	function openTask(task: Task) {
+		activeTask = task;
+		taskInput = '';
+		errorMessage = '';
+	}
+
+	function returnToChat() {
+		activeTask = null;
+		taskInput = '';
+		errorMessage = '';
+	}
+
+	async function submitTask() {
+		if (!activeChat || !activeTask || !taskInput.trim() || taskLoading) return;
+		const content = taskInput.trim();
+		taskLoading = true;
+		errorMessage = '';
+		const response = await fetch(`/api/chats/${activeChat.id}/tasks/${activeTask.id}/submissions`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ content })
+		});
+		if (response.ok) {
+			const body = await response.json();
+			activeChat = body.chat;
+			activeTask = body.task;
+			taskInput = '';
+			if (body.submission.passed) activeTask = null;
+		} else {
+			const body = await response.json().catch(() => null);
+			errorMessage = body?.message ?? '평가에 실패했습니다.';
+		}
+		taskLoading = false;
 	}
 
 	async function sendMessage() {
@@ -74,19 +113,75 @@
 
 		<section class="flex min-h-[calc(100vh-97px)] flex-1 flex-col md:min-h-screen">
 			<header class="border-b border-zinc-800 px-5 py-4">
-				<h2 class="text-sm font-medium text-zinc-400">{activeChat?.title ?? '새 대화'}</h2>
+				<div class="flex items-center justify-between gap-4">
+					<h2 class="text-sm font-medium text-zinc-400">
+						{activeTask ? '과제' : (activeChat?.title ?? '새 대화')}
+					</h2>
+					{#if activeTask}<button
+							class="text-xs text-zinc-400 hover:text-zinc-100"
+							onclick={returnToChat}>원래 대화로 돌아가기</button
+						>{/if}
+				</div>
 			</header>
 			<div class="flex-1 space-y-5 overflow-y-auto p-5">
-				{#if activeChat}
+				{#if activeTask}
+					<div class="mx-auto max-w-2xl space-y-6">
+						<div>
+							<p class="mb-2 text-xs font-medium tracking-widest text-indigo-400 uppercase">
+								직접 생각해 보기
+							</p>
+							<h3 class="text-xl font-semibold text-zinc-100">{activeTask.title}</h3>
+							<p class="mt-4 text-sm leading-7 whitespace-pre-wrap text-zinc-300">
+								{activeTask.prompt}
+							</p>
+						</div>
+						<div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+							<p class="mb-2 text-xs text-zinc-500">통과 기준</p>
+							<ul class="list-inside list-disc space-y-1 text-sm text-zinc-400">
+								{#each activeTask.evaluationCriteria as criterion}<li>{criterion}</li>{/each}
+							</ul>
+						</div>
+						{#if activeTask.submissions.length}
+							<div class="space-y-3">
+								{#each activeTask.submissions as submission}
+									<div
+										class="rounded-xl border p-4 {submission.passed
+											? 'border-emerald-800 bg-emerald-950/30'
+											: 'border-red-900 bg-red-950/20'}"
+									>
+										<p class="text-sm text-zinc-300">{submission.content}</p>
+										<p
+											class="mt-2 text-sm {submission.passed ? 'text-emerald-300' : 'text-red-300'}"
+										>
+											{submission.feedback}
+										</p>
+									</div>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				{:else if activeChat}
 					{#each activeChat.messages as message}
-						<div
-							class:ml-auto={message.role === 'user'}
-							class:max-w-2xl={true}
-							class="rounded-2xl px-4 py-3 text-sm leading-6 {message.role === 'user'
-								? 'bg-indigo-600 text-white'
-								: 'bg-zinc-900 text-zinc-200'}"
-						>
-							{message.content}
+						<div class="max-w-2xl {message.role === 'user' ? 'ml-auto' : ''}">
+							<div
+								class="rounded-2xl px-4 py-3 text-sm leading-6 {message.role === 'user'
+									? 'bg-indigo-600 text-white'
+									: 'bg-zinc-900 text-zinc-200'}"
+							>
+								{message.content}
+							</div>
+							{#if message.tasks?.length}
+								<div class="mt-2 flex flex-wrap gap-2">
+									{#each message.tasks as task}
+										<button
+											class="rounded-lg border border-indigo-800 px-3 py-2 text-xs text-indigo-300 hover:bg-indigo-950"
+											onclick={() => openTask(task)}
+										>
+											{task.status === 'passed' ? '통과한 과제' : '과제 열기'}: {task.title}
+										</button>
+									{/each}
+								</div>
+							{/if}
 						</div>
 					{/each}
 				{:else}
@@ -96,34 +191,58 @@
 				{/if}
 			</div>
 			{#if errorMessage}<p class="px-5 pb-2 text-sm text-red-400">{errorMessage}</p>{/if}
-			<form
-				class="border-t border-zinc-800 p-4"
-				onsubmit={(event) => {
-					event.preventDefault();
-					sendMessage();
-				}}
-			>
-				<div
-					class="flex gap-2 rounded-xl border border-zinc-700 bg-zinc-900 p-2 focus-within:border-zinc-400"
+			{#if activeTask}
+				<form
+					class="border-t border-zinc-800 p-4"
+					onsubmit={(event) => {
+						event.preventDefault();
+						submitTask();
+					}}
 				>
-					<textarea
-						bind:value={input}
-						rows="1"
-						placeholder="질문을 입력하세요"
-						class="min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-zinc-600"
-						disabled={loading}
-						onkeydown={(event) => {
-							if (event.key === 'Enter' && !event.shiftKey) {
-								event.preventDefault();
-								sendMessage();
-							}
-						}}></textarea>
-					<button
-						class="self-end rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500 disabled:opacity-50"
-						disabled={loading || !input.trim()}>{loading ? '...' : '전송'}</button
+					<div
+						class="mx-auto flex max-w-2xl gap-2 rounded-xl border border-zinc-700 bg-zinc-900 p-2 focus-within:border-zinc-400"
 					>
-				</div>
-			</form>
+						<textarea
+							bind:value={taskInput}
+							rows="3"
+							placeholder="내 생각과 근거를 작성하세요"
+							class="min-h-20 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-zinc-600"
+							disabled={taskLoading}></textarea>
+						<button
+							class="self-end rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500 disabled:opacity-50"
+							disabled={taskLoading || !taskInput.trim()}
+							>{taskLoading ? '평가 중...' : '제출'}</button
+						>
+					</div>
+				</form>
+			{:else}<form
+					class="border-t border-zinc-800 p-4"
+					onsubmit={(event) => {
+						event.preventDefault();
+						sendMessage();
+					}}
+				>
+					<div
+						class="flex gap-2 rounded-xl border border-zinc-700 bg-zinc-900 p-2 focus-within:border-zinc-400"
+					>
+						<textarea
+							bind:value={input}
+							rows="1"
+							placeholder="질문을 입력하세요"
+							class="min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-zinc-600"
+							disabled={loading}
+							onkeydown={(event) => {
+								if (event.key === 'Enter' && !event.shiftKey) {
+									event.preventDefault();
+									sendMessage();
+								}
+							}}></textarea>
+						<button
+							class="self-end rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500 disabled:opacity-50"
+							disabled={loading || !input.trim()}>{loading ? '...' : '전송'}</button
+						>
+					</div>
+				</form>{/if}
 		</section>
 	</div>
 </main>
