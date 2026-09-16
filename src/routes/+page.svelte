@@ -126,14 +126,14 @@
 
 		<section class="flex min-h-[calc(100vh-97px)] flex-1 flex-col md:min-h-screen">
 			<header class="border-b border-zinc-800 px-5 py-4">
-				<div class="flex items-center justify-between gap-4">
-					<h2 class="text-sm font-medium text-zinc-400">
-						{activeTask ? '과제' : (activeChat?.title ?? '새 대화')}
-					</h2>
+				<div class="flex items-center gap-3">
 					{#if activeTask}<button
 							class="rounded-lg border border-zinc-800 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-100"
 							onclick={returnToChat}>원래 대화로 돌아가기</button
 						>{/if}
+					<h2 class="text-sm font-medium text-zinc-400">
+						{activeTask ? '과제' : (activeChat?.title ?? '새 대화')}
+					</h2>
 				</div>
 			</header>
 			<div class="flex-1 space-y-5 overflow-y-auto p-5">
@@ -201,7 +201,9 @@
 								<div class="mt-2 flex flex-wrap gap-2">
 									{#each message.tasks as task}
 										<button
-											class="rounded-lg border border-indigo-800 px-3 py-2 text-xs text-indigo-300 hover:bg-indigo-950"
+											class="rounded-lg border px-3 py-2 text-xs {task.status === 'passed'
+												? 'border-emerald-800 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-950/50'
+												: 'border-amber-800 bg-amber-950/20 text-amber-300 hover:bg-amber-950/50'}"
 											onclick={() => openTask(task)}
 										>
 											{task.status === 'passed' ? '통과한 과제' : '과제 열기'}: {task.title}
