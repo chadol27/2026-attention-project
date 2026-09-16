@@ -1,4 +1,3 @@
-
 # 과의존 방지 AI 서비스 MVP 계획
 
 ## 목표
@@ -40,11 +39,11 @@ chats/
 
 ```ts
 type ChatListItem = {
-  id: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  fileName: string;
+	id: string;
+	title: string;
+	createdAt: string;
+	updatedAt: string;
+	fileName: string;
 };
 ```
 
@@ -52,19 +51,19 @@ type ChatListItem = {
 
 ```ts
 type Chat = {
-  id: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  messages: Message[];
+	id: string;
+	title: string;
+	createdAt: string;
+	updatedAt: string;
+	messages: Message[];
 };
 
 type Message = {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  createdAt: string;
-  tasks?: Task[];
+	id: string;
+	role: 'user' | 'assistant';
+	content: string;
+	createdAt: string;
+	tasks?: Task[];
 };
 ```
 
@@ -82,23 +81,18 @@ type Message = {
 매 요청마다 AI가 단일 JSON을 반환하도록 시스템 프롬프트와 응답 형식을 고정한다.
 
 ```ts
-type RequestType =
-  | 'information'
-  | 'generation'
-  | 'decision'
-  | 'problemSolving'
-  | 'other';
+type RequestType = 'information' | 'generation' | 'decision' | 'problemSolving' | 'other';
 
 type AssistantResult = {
-  answer: string;
-  requestType: RequestType;
-  requestedDirectAnswer: boolean;
-  shouldCreateTask: boolean;
-  task?: {
-    title: string;
-    prompt: string;
-    evaluationCriteria: string[];
-  };
+	answer: string;
+	requestType: RequestType;
+	requestedDirectAnswer: boolean;
+	shouldCreateTask: boolean;
+	task?: {
+		title: string;
+		prompt: string;
+		evaluationCriteria: string[];
+	};
 };
 ```
 
@@ -117,20 +111,20 @@ type AssistantResult = {
 
 ```ts
 type Task = {
-  id: string;
-  title: string;
-  prompt: string;
-  evaluationCriteria: string[];
-  status: 'pending' | 'passed';
-  submissions: Submission[];
+	id: string;
+	title: string;
+	prompt: string;
+	evaluationCriteria: string[];
+	status: 'pending' | 'passed';
+	submissions: Submission[];
 };
 
 type Submission = {
-  id: string;
-  content: string;
-  passed: boolean;
-  feedback: string;
-  createdAt: string;
+	id: string;
+	content: string;
+	passed: boolean;
+	feedback: string;
+	createdAt: string;
 };
 ```
 

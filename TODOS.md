@@ -1,23 +1,23 @@
-
 # MVP TODO
 
 ## 1단계: 기본 AI 채팅
 
-- [ ] `pnpm` 기반 SvelteKit + TypeScript 프로젝트 초기화
-- [ ] Tailwind CSS 설정 및 다크모드 단일 테마 구성
-- [ ] `OPENAI_API_KEY`, `OPENAI_MODEL` 환경변수 계약과 서버 오류 처리 추가
-- [ ] `chats/` 디렉터리와 `list.json` 초기 처리 구현
-- [ ] 채팅/메시지/목록 타입 정의
-- [ ] 채팅 파일명 생성: `YYYYMMDD-HHmmss-<id>.json`
-- [ ] UTC ISO 날짜와 `crypto.randomUUID()` 사용
-- [ ] 채팅 목록 조회 및 `updatedAt` 내림차순 정렬
-- [ ] 첫 질문 앞 40자 자동 제목 생성
-- [ ] 새 채팅 생성과 현재 대화 표시
-- [ ] 기존 채팅 선택 및 전체 메시지 재조회
-- [ ] 서버 메시지 전송 API 구현
-- [ ] OpenAI 공식 SDK로 비스트리밍 호출 구현
-- [ ] AI 응답 완료 후 채팅 파일과 목록 파일 저장
-- [ ] API/파일 오류 표시 및 재시도 구현
+- [x] `pnpm` 기반 SvelteKit + TypeScript 프로젝트 초기화
+- [x] Tailwind CSS 설정 및 다크모드 단일 테마 구성
+- [x] Prettier 설정 및 포맷 검사 명령 추가
+- [x] `OPENAI_API_KEY`, `OPENAI_MODEL` 환경변수 계약과 서버 오류 처리 추가
+- [x] `chats/` 디렉터리와 `list.json` 초기 처리 구현
+- [x] 채팅/메시지/목록 타입 정의
+- [x] 채팅 파일명 생성: `YYYYMMDD-HHmmss-<id>.json`
+- [x] UTC ISO 날짜와 `crypto.randomUUID()` 사용
+- [x] 채팅 목록 조회 및 `updatedAt` 내림차순 정렬
+- [x] 첫 질문 앞 40자 자동 제목 생성
+- [x] 새 채팅 생성과 현재 대화 표시
+- [x] 기존 채팅 선택 및 전체 메시지 재조회
+- [x] 서버 메시지 전송 API 구현
+- [x] OpenAI 공식 SDK로 비스트리밍 호출 구현
+- [x] AI 응답 완료 후 채팅 파일과 목록 파일 저장
+- [x] API/파일 오류 표시 및 재시도 구현
 
 ## 2단계: 과의존 방지
 
@@ -55,8 +55,8 @@
 - [ ] 과제 통과 후 원래 대화 복귀 확인
 - [ ] 잘못된 API 키/모델 누락/AI JSON 오류 재시도 확인
 - [ ] 모바일 좁은 화면에서 목록과 본문 세로 배치 확인
-- [ ] `pnpm check` 실행
-- [ ] `pnpm build` 실행
+- [x] `pnpm check` 실행
+- [x] `pnpm build` 실행
 
 ## 후속 작업
 
