@@ -225,7 +225,7 @@
 					{#if !taskInput.trim()}
 						<div class="mx-auto mb-3 max-w-2xl">
 							<button
-								class="text-sm text-zinc-400 underline decoration-zinc-700 underline-offset-4 hover:text-zinc-100"
+								class="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-500 hover:bg-zinc-900 hover:text-zinc-100"
 								onclick={returnToChat}>과제 넘어가기</button
 							>
 						</div>
