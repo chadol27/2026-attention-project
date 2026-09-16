@@ -251,14 +251,12 @@
 						{#if taskContext}
 							<div class="space-y-4 border-l-2 border-zinc-800 pl-4">
 								<div>
-									<p class="mb-1 text-xs text-zinc-400">질문</p>
 									<p class="text-sm leading-6 whitespace-pre-wrap text-zinc-400">
 										{activeChat?.messages[activeChat.messages.indexOf(taskContext) - 1]?.content ??
 											''}
 									</p>
 								</div>
 								<div>
-									<p class="mb-1 text-xs text-zinc-400">AI 답변</p>
 									<p class="text-sm leading-6 whitespace-pre-wrap text-zinc-300">
 										{taskContext.content}
 									</p>
@@ -266,7 +264,6 @@
 							</div>
 						{/if}
 						<div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
-							<p class="mb-2 text-xs text-zinc-400">통과 기준</p>
 							<ul class="list-inside list-disc space-y-1 text-sm text-zinc-400">
 								{#each activeTask.evaluationCriteria as criterion}<li>{criterion}</li>{/each}
 							</ul>
