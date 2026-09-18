@@ -85,6 +85,19 @@
 		errorMessage = '';
 	}
 
+	function handleGlobalKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape' && activeTask) {
+			event.preventDefault();
+			returnToChat();
+			return;
+		}
+
+		if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'o') {
+			event.preventDefault();
+			newChat();
+		}
+	}
+
 	function formatChatDate(date: string) {
 		return new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric' }).format(
 			new Date(date)
@@ -162,6 +175,7 @@
 </script>
 
 <svelte:head><title>과의존 방지 AI</title></svelte:head>
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 <main
 	class="grid h-screen min-h-screen grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-zinc-950 text-zinc-100"
@@ -180,6 +194,7 @@
 					<button
 						type="button"
 						class="rounded-lg bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-900 transition hover:bg-white focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
+						aria-keyshortcuts="Control+Shift+O"
 						onclick={newChat}>새 채팅</button
 					>
 				{/if}
@@ -225,6 +240,7 @@
 					{#if activeTask}<button
 							type="button"
 							class="shrink-0 rounded-lg border border-indigo-400 bg-indigo-600 px-3 py-2 text-xs font-medium text-white shadow-sm transition hover:border-indigo-300 hover:bg-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:outline-none"
+							aria-keyshortcuts="Escape"
 							onclick={returnToChat}>원래 대화로 돌아가기</button
 						>{/if}
 					{#if activeTask}
