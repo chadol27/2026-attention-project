@@ -35,12 +35,16 @@ When more than one category seems possible, choose the category matching the mai
 4. Use other only when no actionable intent is clear.
 Do not answer the request or explain the classification.`;
 
-const directAnswerPrompt = `You are determining whether a user explicitly requests a direct answer to a problem-solving request.
+const directAnswerPrompt = `You are determining whether a user explicitly repeats a request for the direct answer after the assistant withheld it for the same problem.
 Return exactly one valid JSON object with this field:
 {"requestedDirectAnswer": boolean}
-Classify only the latest user message, using the conversation for context when useful.
-Set true only when the user explicitly asks for the answer, final result, or complete solution.
-Set false when the user asks for a hint, explanation of the approach, or does not clearly request the final answer.`;
+Classify only the latest user message, but use the conversation to verify that the assistant previously gave hints without the final answer for the same problem.
+For each distinct problem, follow this sequence:
+1. On the user's first request about that problem, always set false, even if it says "solve it", "give me the answer", or equivalent.
+2. If the assistant then responds without the final answer and the user asks again for the answer to that same problem, set true.
+3. Requests about a new or different problem restart at step 1 and must be false.
+Do not treat repetition alone as sufficient: the repeated message must explicitly request the answer, final result, or complete solution.
+Set false when the user asks for another hint, an explanation of the approach, or discusses a different problem.`;
 
 const informationTaskStyleInstructions: Record<InformationTaskStyle, string> = {
 	verify:
@@ -105,7 +109,7 @@ ${informationInstruction}
 For information requests, answer clearly and create one short task.
 For decision requests, do not recommend a specific choice. Present options and tradeoffs, then create a task requiring the user's decision and at least two reasons.
 For generation requests, provide only an outline, a small example, and useful tips; do not write the entire result. Do not create a task.
-For problem-solving requests, ${requestedDirectAnswer ? 'provide the direct answer or complete solution because the user explicitly requested it' : 'provide hints and a solution approach, but not the final answer'}. Do not create a task.
+For problem-solving requests, ${requestedDirectAnswer ? 'provide the direct answer or complete solution because the user explicitly requested it again after receiving hints' : 'provide only hints and the next useful step. Do not state the final answer, final result, completed proof, corrected code, or a calculation that directly reveals the final result'}. Do not create a task.
 For other requests, answer normally and do not create a task.
 Only set shouldCreateTask true when task is present and valid. Keep task prompts concise.`;
 }
@@ -132,8 +136,9 @@ export async function askAI(messages: { role: 'user' | 'assistant'; content: str
 	const requestType = parseRequestType(
 		await createCompletion(client, classificationPrompt, messages)
 	);
+	const hasPriorAssistantResponse = messages.slice(0, -1).some(({ role }) => role === 'assistant');
 	const requestedDirectAnswer =
-		requestType === 'problemSolving'
+		requestType === 'problemSolving' && hasPriorAssistantResponse
 			? parseDirectAnswer(await createCompletion(client, directAnswerPrompt, messages))
 			: false;
 	const informationTaskStyle =
