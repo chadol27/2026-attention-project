@@ -96,6 +96,16 @@
 		if (messagesContainer) messagesContainer.scrollTop = messagesContainer.scrollHeight;
 	}
 
+	function createId() {
+		if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+
+		const bytes = crypto.getRandomValues(new Uint8Array(16));
+		bytes[6] = (bytes[6] & 0x0f) | 0x40;
+		bytes[8] = (bytes[8] & 0x3f) | 0x80;
+		const value = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+		return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
+	}
+
 	async function submitTask() {
 		if (!activeChat || !activeTask || !taskInput.trim() || taskLoading) return;
 		const content = taskInput.trim();
@@ -129,7 +139,7 @@
 		pendingMessage = content;
 		loading = true;
 		errorMessage = '';
-		const id = activeChat?.id ?? crypto.randomUUID();
+		const id = activeChat?.id ?? createId();
 		const response = await fetch(`/api/chats/${id}/messages`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },

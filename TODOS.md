@@ -9,7 +9,7 @@
 - [x] `chats/` 디렉터리와 `list.json` 초기 처리 구현
 - [x] 채팅/메시지/목록 타입 정의
 - [x] 채팅 파일명 생성: `YYYYMMDD-HHmmss-<id>.json`
-- [x] UTC ISO 날짜와 `crypto.randomUUID()` 사용
+- [x] UTC ISO 날짜와 UUID 사용, 클라이언트 `randomUUID()` 미지원 환경 fallback 처리
 - [x] 채팅 목록 조회 및 `updatedAt` 내림차순 정렬
 - [x] 첫 질문 앞 40자 자동 제목 생성
 - [x] 새 채팅 생성과 현재 대화 표시
