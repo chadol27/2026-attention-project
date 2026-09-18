@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { randomInt } from 'node:crypto';
 import { env } from '$env/dynamic/private';
 import type { AssistantResult, RequestType } from '$lib/types';
 
@@ -10,26 +11,54 @@ const requestTypes: RequestType[] = [
 	'other'
 ];
 
-const systemPrompt = `You are an AI assistant designed to prevent user overdependence.
-Return exactly one valid JSON object with these fields:
-{"answer": string, "requestType": "information"|"generation"|"decision"|"problemSolving"|"other", "requestedDirectAnswer": boolean, "shouldCreateTask": boolean, "task"?: {"title": string, "prompt": string, "evaluationCriteria": string[]}}
-Answer in the user's language.
-Classify the request as information, generation, decision, problemSolving, or other.
-For information, questions, and learning requests, answer clearly and create one short task asking the user to verify, summarize, or explain the idea in their own words. Randomly choose one of those three task styles.
-For decision requests, do not recommend a specific choice. Present options and tradeoffs, then create a task requiring the user's decision and at least two reasons.
-For generation requests, provide only an outline, a small example, and useful tips; do not write the entire result. Do not create a task.
-For problem-solving requests, provide hints rather than the final answer unless the user explicitly asks again for the direct answer or complete solution. Set requestedDirectAnswer true when they explicitly request it. Do not create a task.
-Only set shouldCreateTask true when task is present and valid. Keep task prompts concise.`;
+type InformationTaskStyle = 'verify' | 'summarize' | 'rephrase';
 
-function parseResult(value: string): AssistantResult {
-	const result = JSON.parse(value) as Partial<AssistantResult>;
-	if (
-		typeof result.answer !== 'string' ||
-		!requestTypes.includes(result.requestType as RequestType) ||
-		typeof result.requestedDirectAnswer !== 'boolean' ||
-		typeof result.shouldCreateTask !== 'boolean'
-	)
-		throw new Error('AI 응답 형식이 올바르지 않습니다.');
+const informationTaskStyles: InformationTaskStyle[] = ['verify', 'summarize', 'rephrase'];
+
+const classificationPrompt = `You are a request classifier for an AI assistant designed to prevent user overdependence.
+Return exactly one valid JSON object with this field:
+{"requestType": "information"|"generation"|"decision"|"problemSolving"|"other"}
+Classify only the latest user message, using the conversation for context when useful.
+Use information for information searches, questions, and learning requests.
+Use generation for requests to write or create text, code, or other content.
+Use decision for judgment requests and decision support.
+Use problemSolving for requests to solve a problem or debug something.
+Use other when none of those categories apply.`;
+
+const directAnswerPrompt = `You are determining whether a user explicitly requests a direct answer to a problem-solving request.
+Return exactly one valid JSON object with this field:
+{"requestedDirectAnswer": boolean}
+Classify only the latest user message, using the conversation for context when useful.
+Set true only when the user explicitly asks for the answer, final result, or complete solution.
+Set false when the user asks for a hint, explanation of the approach, or does not clearly request the final answer.`;
+
+const informationTaskStyleInstructions: Record<InformationTaskStyle, string> = {
+	verify:
+		'Create a task asking the user to verify one important claim from the answer with a reliable source and explain the evidence.',
+	summarize: 'Create a task asking the user to summarize the answer in a few sentences.',
+	rephrase: 'Create a task asking the user to explain the answer again in their own words.'
+};
+
+type GeneratedResult = Pick<AssistantResult, 'answer' | 'shouldCreateTask' | 'task'>;
+
+function parseRequestType(value: string): RequestType {
+	const result = JSON.parse(value) as { requestType?: unknown };
+	if (!requestTypes.includes(result.requestType as RequestType))
+		throw new Error('AI 요청 유형 형식이 올바르지 않습니다.');
+	return result.requestType as RequestType;
+}
+
+function parseDirectAnswer(value: string): boolean {
+	const result = JSON.parse(value) as { requestedDirectAnswer?: unknown };
+	if (typeof result.requestedDirectAnswer !== 'boolean')
+		throw new Error('AI 직접 답변 판정 형식이 올바르지 않습니다.');
+	return result.requestedDirectAnswer;
+}
+
+function parseGeneratedResult(value: string): GeneratedResult {
+	const result = JSON.parse(value) as Partial<GeneratedResult>;
+	if (typeof result.answer !== 'string' || typeof result.shouldCreateTask !== 'boolean')
+		throw new Error('AI 답변 형식이 올바르지 않습니다.');
 	if (result.shouldCreateTask) {
 		const task = result.task;
 		if (
@@ -41,21 +70,73 @@ function parseResult(value: string): AssistantResult {
 		)
 			throw new Error('AI 과제 형식이 올바르지 않습니다.');
 	}
-	return result as AssistantResult;
+	return result as GeneratedResult;
+}
+
+function pickInformationTaskStyle() {
+	return informationTaskStyles[randomInt(informationTaskStyles.length)];
+}
+
+function createAnswerPrompt(
+	requestType: RequestType,
+	requestedDirectAnswer: boolean,
+	informationTaskStyle?: InformationTaskStyle
+) {
+	const informationInstruction = informationTaskStyle
+		? `The server selected this information task style. Use exactly this style: ${informationTaskStyle}. ${informationTaskStyleInstructions[informationTaskStyle]}`
+		: '';
+
+	return `You are an AI assistant designed to prevent user overdependence.
+Return exactly one valid JSON object with these fields:
+{"answer": string, "shouldCreateTask": boolean, "task"?: {"title": string, "prompt": string, "evaluationCriteria": string[]}}
+Answer in the user's language.
+The server classified the latest request as: ${requestType}.
+${informationInstruction}
+For information requests, answer clearly and create one short task.
+For decision requests, do not recommend a specific choice. Present options and tradeoffs, then create a task requiring the user's decision and at least two reasons.
+For generation requests, provide only an outline, a small example, and useful tips; do not write the entire result. Do not create a task.
+For problem-solving requests, ${requestedDirectAnswer ? 'provide the direct answer or complete solution because the user explicitly requested it' : 'provide hints and a solution approach, but not the final answer'}. Do not create a task.
+For other requests, answer normally and do not create a task.
+Only set shouldCreateTask true when task is present and valid. Keep task prompts concise.`;
+}
+
+async function createCompletion(
+	client: OpenAI,
+	systemPrompt: string,
+	messages: { role: 'user' | 'assistant'; content: string }[]
+) {
+	const completion = await client.chat.completions.create({
+		model: env.OPENAI_MODEL!,
+		messages: [{ role: 'system', content: systemPrompt }, ...messages],
+		response_format: { type: 'json_object' }
+	});
+	const content = completion.choices[0]?.message.content?.trim();
+	if (!content) throw new Error('AI가 답변을 반환하지 않았습니다.');
+	return content;
 }
 
 export async function askAI(messages: { role: 'user' | 'assistant'; content: string }[]) {
 	if (!env.OPENAI_API_KEY || !env.OPENAI_MODEL)
 		throw new Error('OPENAI_API_KEY와 OPENAI_MODEL을 설정해 주세요.');
 	const client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
-	const completion = await client.chat.completions.create({
-		model: env.OPENAI_MODEL,
-		messages: [{ role: 'system', content: systemPrompt }, ...messages],
-		response_format: { type: 'json_object' }
-	});
-	const content = completion.choices[0]?.message.content?.trim();
-	if (!content) throw new Error('AI가 답변을 반환하지 않았습니다.');
-	return parseResult(content);
+	const requestType = parseRequestType(
+		await createCompletion(client, classificationPrompt, messages)
+	);
+	const requestedDirectAnswer =
+		requestType === 'problemSolving'
+			? parseDirectAnswer(await createCompletion(client, directAnswerPrompt, messages))
+			: false;
+	const informationTaskStyle =
+		requestType === 'information' ? pickInformationTaskStyle() : undefined;
+	const generated = parseGeneratedResult(
+		await createCompletion(
+			client,
+			createAnswerPrompt(requestType, requestedDirectAnswer, informationTaskStyle),
+			messages
+		)
+	);
+
+	return { ...generated, requestType, requestedDirectAnswer } satisfies AssistantResult;
 }
 
 export async function evaluateTask(input: {
