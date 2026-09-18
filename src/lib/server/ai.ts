@@ -152,13 +152,16 @@ export async function askAI(messages: { role: 'user' | 'assistant'; content: str
 	if (!env.OPENAI_API_KEY || !env.OPENAI_MODEL)
 		throw new Error('OPENAI_API_KEY와 OPENAI_MODEL을 설정해 주세요.');
 	const client = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+	const aiMessages = messages.map(({ role, content }) => ({ role, content }));
 	const requestType = parseRequestType(
-		await createCompletion(client, classificationPrompt, messages)
+		await createCompletion(client, classificationPrompt, aiMessages)
 	);
-	const hasPriorAssistantResponse = messages.slice(0, -1).some(({ role }) => role === 'assistant');
+	const hasPriorAssistantResponse = aiMessages
+		.slice(0, -1)
+		.some(({ role }) => role === 'assistant');
 	const requestedDirectAnswer =
 		requestType === 'problemSolving' && hasPriorAssistantResponse
-			? parseDirectAnswer(await createCompletion(client, directAnswerPrompt, messages))
+			? parseDirectAnswer(await createCompletion(client, directAnswerPrompt, aiMessages))
 			: false;
 	const informationTaskStyle =
 		requestType === 'information' ? pickInformationTaskStyle() : undefined;
@@ -166,7 +169,7 @@ export async function askAI(messages: { role: 'user' | 'assistant'; content: str
 		await createAnswerCompletion(
 			client,
 			createAnswerPrompt(requestType, requestedDirectAnswer, informationTaskStyle),
-			messages
+			aiMessages
 		)
 	);
 
