@@ -38,6 +38,14 @@ export async function readChat(id: string) {
 	return JSON.parse(await readFile(path.join(chatsDirectory, item.fileName), 'utf8')) as Chat;
 }
 
+export async function removeChatFromList(id: string) {
+	const list = await readList();
+	const filtered = list.filter((chat) => chat.id !== id);
+	if (filtered.length === list.length) return false;
+	await writeList(filtered);
+	return true;
+}
+
 export async function saveChat(chat: Chat) {
 	await ensureStorage();
 	const list = await readList();

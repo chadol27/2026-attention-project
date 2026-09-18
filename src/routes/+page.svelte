@@ -13,6 +13,7 @@
 	let activeTask = $state<Task | null>(null);
 	let taskInput = $state('');
 	let taskLoading = $state(false);
+	let deletingChatId = $state<string | null>(null);
 	let mobileView = $state<'list' | 'chat'>('list');
 	let messagesContainer = $state<HTMLDivElement>();
 	let taskContext = $derived(
@@ -70,6 +71,27 @@
 			}
 		} finally {
 			chatLoading = false;
+		}
+	}
+
+	async function deleteChat(id: string) {
+		if (deletingChatId) return;
+		deletingChatId = id;
+		errorMessage = '';
+		try {
+			const response = await fetch(`/api/chats/${id}`, { method: 'DELETE' });
+			if (!response.ok) {
+				const body = await response.json().catch(() => null);
+				errorMessage = body?.message ?? '대화를 삭제하지 못했습니다.';
+				return;
+			}
+
+			chats = chats.filter((chat) => chat.id !== id);
+			if (activeChat?.id === id) newChat();
+		} catch {
+			errorMessage = '대화를 삭제하지 못했습니다.';
+		} finally {
+			deletingChatId = null;
 		}
 	}
 
@@ -206,18 +228,29 @@
 			{:else}
 				<nav class="space-y-1" aria-label="저장된 대화">
 					{#each chats as chat}
-						<button
-							type="button"
-							class:active={activeChat?.id === chat.id}
-							class="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-300 transition hover:bg-zinc-900 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
-							aria-current={activeChat?.id === chat.id ? 'page' : undefined}
-							onclick={() => openChat(chat.id)}
-						>
-							<span class="block truncate">{chat.title}</span>
-							<time class="mt-1 block text-xs text-zinc-400" datetime={chat.updatedAt}
-								>{formatChatDate(chat.updatedAt)}</time
+						<div class="flex items-center gap-1">
+							<button
+								type="button"
+								class:active={activeChat?.id === chat.id}
+								class="min-w-0 flex-1 rounded-lg px-3 py-2 text-left text-sm text-zinc-300 transition hover:bg-zinc-900 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
+								aria-current={activeChat?.id === chat.id ? 'page' : undefined}
+								onclick={() => openChat(chat.id)}
 							>
-						</button>
+								<span class="block truncate">{chat.title}</span>
+								<time class="mt-1 block text-xs text-zinc-400" datetime={chat.updatedAt}
+									>{formatChatDate(chat.updatedAt)}</time
+								>
+							</button>
+							<button
+								type="button"
+								class="shrink-0 px-1 text-xs text-red-400 transition hover:text-red-300 hover:underline focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:outline-none disabled:opacity-50"
+								aria-label={`${chat.title} 대화 삭제`}
+								disabled={deletingChatId === chat.id}
+								onclick={() => deleteChat(chat.id)}
+							>
+								삭제
+							</button>
+						</div>
 					{/each}
 				</nav>
 			{/if}
