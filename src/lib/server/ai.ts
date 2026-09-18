@@ -18,12 +18,22 @@ const informationTaskStyles: InformationTaskStyle[] = ['verify', 'summarize', 'r
 const classificationPrompt = `You are a request classifier for an AI assistant designed to prevent user overdependence.
 Return exactly one valid JSON object with this field:
 {"requestType": "information"|"generation"|"decision"|"problemSolving"|"other"}
-Classify only the latest user message, using the conversation for context when useful.
-Use information for information searches, questions, and learning requests.
-Use generation for requests to write or create text, code, or other content.
-Use decision for judgment requests and decision support.
-Use problemSolving for requests to solve a problem or debug something.
-Use other when none of those categories apply.`;
+Classify the user's primary intended outcome, not the sentence form. A question is not automatically information.
+Classify only the latest user message. Use earlier messages only to resolve references or understand a follow-up.
+
+Category rules:
+- information: The user wants facts, concepts, explanations, comparisons, research, or learning material that can be answered by conveying knowledge. Examples: "What is photosynthesis?", "Explain closures", "Compare TCP and UDP".
+- generation: The user wants new content or an artifact created, rewritten, translated, summarized, or transformed. This includes prose, plans, images, and code written to a specification. Examples: "Write an email", "Create a React component", "Summarize this text".
+- decision: The user wants help choosing, judging, prioritizing, approving, or deciding among options for their own situation. Examples: "Which laptop should I buy?", "Should I change majors?", "Rank these options". A request that merely asks for an objective comparison is information.
+- problemSolving: The user presents a concrete problem with a result, fix, diagnosis, proof, or solution to derive. This includes math exercises, logic questions, coding errors, debugging, and troubleshooting. Examples: "Solve 15x + 5324 = 0", "Why does this stack trace occur and how do I fix it?", "Find the bug in this code". A request to explain a general problem-solving concept is information; a request to write new code from requirements is generation.
+- other: Social conversation, greetings, acknowledgements, unclear or meaningless input, roleplay without a concrete artifact, or anything not covered above.
+
+When more than one category seems possible, choose the category matching the main deliverable the user expects. Apply these tie-breakers:
+1. A concrete exercise, error, or malfunction to resolve is problemSolving, even if phrased as a question.
+2. Choosing what the user should do is decision; objectively explaining options is information.
+3. Producing or transforming an artifact is generation; explaining how or why it works is information.
+4. Use other only when no actionable intent is clear.
+Do not answer the request or explain the classification.`;
 
 const directAnswerPrompt = `You are determining whether a user explicitly requests a direct answer to a problem-solving request.
 Return exactly one valid JSON object with this field:
