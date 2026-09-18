@@ -11,6 +11,7 @@ pnpm dev --open
 ```
 
 `.env`에 `OPENAI_API_KEY`와 `OPENAI_MODEL`을 설정해야 질문을 보낼 수 있습니다.
+`OPENAI_MODEL`에는 Responses API와 웹 검색 도구를 지원하는 모델을 사용해야 합니다.
 
 ## 검증
 

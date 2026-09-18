@@ -106,6 +106,7 @@ Return exactly one valid JSON object with these fields:
 Answer in the user's language.
 The server classified the latest request as: ${requestType}.
 ${informationInstruction}
+Use web search when current, external, or verifiable information would improve the answer. Do not search when the request can be answered reliably without it. When web search is used, include the source names and URLs in the answer.
 For information requests, answer clearly and create one short task.
 For decision requests, do not recommend a specific choice. Present options and tradeoffs, then create a task requiring the user's decision and at least two reasons.
 For generation requests, provide only an outline, a small example, and useful tips; do not write the entire result. Do not create a task.
@@ -129,6 +130,24 @@ async function createCompletion(
 	return content;
 }
 
+async function createAnswerCompletion(
+	client: OpenAI,
+	systemPrompt: string,
+	messages: { role: 'user' | 'assistant'; content: string }[]
+) {
+	const response = await client.responses.create({
+		model: env.OPENAI_MODEL!,
+		instructions: systemPrompt,
+		input: messages,
+		tools: [{ type: 'web_search', external_web_access: true }],
+		text: { format: { type: 'json_object' } },
+		store: false
+	});
+	const content = response.output_text.trim();
+	if (!content) throw new Error('AI가 답변을 반환하지 않았습니다.');
+	return content;
+}
+
 export async function askAI(messages: { role: 'user' | 'assistant'; content: string }[]) {
 	if (!env.OPENAI_API_KEY || !env.OPENAI_MODEL)
 		throw new Error('OPENAI_API_KEY와 OPENAI_MODEL을 설정해 주세요.');
@@ -144,7 +163,7 @@ export async function askAI(messages: { role: 'user' | 'assistant'; content: str
 	const informationTaskStyle =
 		requestType === 'information' ? pickInformationTaskStyle() : undefined;
 	const generated = parseGeneratedResult(
-		await createCompletion(
+		await createAnswerCompletion(
 			client,
 			createAnswerPrompt(requestType, requestedDirectAnswer, informationTaskStyle),
 			messages
